@@ -1,11 +1,12 @@
 (ns http-echo-clj.handlers
   (:require
+    [clojure.java.io :as io]
     [clojure.tools.logging :refer [info warn error]]
     [cognitect.transit :as transit]
     [clojure.core.async :as async :refer [go]]
     [ring.util.codec :refer [form-decode]])
   (:import
-    (java.io ByteArrayOutputStream)))
+    (java.io ByteArrayOutputStream InputStream)))
 
 (defn clj->transit
   [v]
@@ -26,20 +27,30 @@
     (form-decode query-string)
     {}))
 
+(defn input-stream->bytes
+  [input-stream]
+  (let [baos (ByteArrayOutputStream. 4096)]
+    (io/copy input-stream baos)
+    (into [] (.toByteArray baos))))
+
 (defn sanitize-req
   [req]
-  (select-keys req [:server-port
-                    :server-name
-                    :remote-addr
-                    :uri
-                    :query-string
-                    :scheme
-                    :request-method
-                    :headers
-                    :body
-                    :content-type
-                    :content-length
-                    :character-encoding]))
+  (-> req
+    (select-keys [:server-port
+                  :server-name
+                  :remote-addr
+                  :uri
+                  :query-string
+                  :scheme
+                  :request-method
+                  :headers
+                  :body
+                  :content-type
+                  :content-length
+                  :character-encoding])
+    (update :body (fn [v]
+                    (cond-> v
+                      (instance? InputStream v) input-stream->bytes)))))
 
 (defn handle
   [req]
