@@ -1,6 +1,7 @@
 (ns http-echo-clj.handlers
   (:require
     [clojure.java.io :as io]
+    [clojure.string :as string]
     [clojure.tools.logging :refer [info warn error]]
     [cognitect.transit :as transit]
     [clojure.core.async :as async :refer [go]]
@@ -33,6 +34,23 @@
     (io/copy input-stream baos)
     (into [] (.toByteArray baos))))
 
+(defn textual-content-type?
+  [content-type]
+  (and (some? content-type)
+       (or (string/starts-with? content-type "text/")
+           (contains?
+             #{"application/json"
+               "application/xml"}
+             content-type))))
+
+(defn extract-content-type
+  [req]
+  (get (:headers req) "content-type"))
+
+(defn extract-character-encoding
+  [req]
+  (get (:headers req) "character-encoding"))
+
 (defn sanitize-req
   [req]
   (-> req
@@ -49,8 +67,11 @@
                   :content-length
                   :character-encoding])
     (update :body (fn [v]
-                    (cond-> v
-                      (instance? InputStream v) input-stream->bytes)))))
+                    (if (instance? InputStream v)
+                      (if (-> req extract-content-type textual-content-type?)
+                        (slurp v :encoding (extract-character-encoding req))
+                        (input-stream->bytes v))
+                      v)))))
 
 (defn handle
   [req]
