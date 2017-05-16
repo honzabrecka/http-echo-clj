@@ -1,4 +1,5 @@
 (defproject http-echo-clj "0.3.0"
+  :min-lein-version "2.6.1"
   :dependencies [[compojure "1.5.1"]
                  [http-kit "2.1.16"]
                  [javax.servlet/javax.servlet-api "3.1.0"]
@@ -13,4 +14,5 @@
   :test-paths ["src/test/clojure"]
   :resource-paths ["src/main/resource"]
   :main http-echo-clj.core
+  :uberjar-name "server"
   :aot :all)

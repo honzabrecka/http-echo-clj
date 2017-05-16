@@ -33,7 +33,7 @@
   (info "Starting server...")
   (reset! server (http-server/run-server
                    (site #'all-routes {:multipart {:store (byte-array-store)}})
-                   {:port 52173}))
+                   {:port (Integer. (or (System/getenv "PORT") "52173"))}))
   (info "Server started."))
 
 (defn stop-server!
