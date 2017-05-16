@@ -1,4 +1,4 @@
-(defproject http-echo-clj "0.2.0"
+(defproject http-echo-clj "0.3.0"
   :dependencies [[compojure "1.5.1"]
                  [http-kit "2.1.16"]
                  [javax.servlet/javax.servlet-api "3.1.0"]
